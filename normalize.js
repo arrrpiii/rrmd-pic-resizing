@@ -2,26 +2,24 @@
 export function detectBounds({ data, width, height }, tolerance = 24) {
   const total = width * height;
   if (!width || !height || data.length !== total * 4) throw new Error('Invalid image pixels.');
-  let transparent = 0;
-  for (let i = 3; i < data.length; i += 4) if (data[i] < 16) transparent++;
-  const hasTransparency = transparent > total * .005;
-  const samples = [];
-  const patch = Math.max(1, Math.round(Math.min(width, height) * .035));
-  for (const [sx, sy] of [[0, 0], [width - patch, 0], [0, height - patch], [width - patch, height - patch]]) {
-    for (let y = sy; y < sy + patch; y++) for (let x = sx; x < sx + patch; x++) {
-      const i = (y * width + x) * 4;
-      if (data[i + 3] > 240) samples.push([data[i], data[i + 1], data[i + 2]]);
-    }
+  // Tolerance is an alpha threshold: 0 is transparent, 255 is opaque.
+  // Resize only when transparent space surrounds the entire outer perimeter.
+  const alphaThreshold = Math.max(0, Math.min(254, tolerance));
+  const isForeground = p => data[p * 4 + 3] > alphaThreshold;
+  const unchanged = () => ({
+    left: 0, top: 0, right: width, bottom: height, width, height,
+    background: null, warning: '', preserveOriginal: true,
+  });
+  for (let x = 0; x < width; x++) {
+    if (isForeground(x) || isForeground((height - 1) * width + x)) return unchanged();
   }
-  const bg = [0, 1, 2].map(c => samples.length ? samples.map(p => p[c]).sort((a, b) => a - b)[Math.floor(samples.length / 2)] : 255);
-  const distance = (r, g, b) => Math.max(Math.abs(r - bg[0]), Math.abs(g - bg[1]), Math.abs(b - bg[2]));
-  const consistency = samples.length ? samples.filter(p => distance(...p) <= tolerance).length / samples.length : 1;
-  const background = hasTransparency ? null : bg;
+  for (let y = 0; y < height; y++) {
+    if (isForeground(y * width) || isForeground(y * width + width - 1)) return unchanged();
+  }
   const mask = new Uint8Array(total);
   let foreground = 0;
   for (let p = 0; p < total; p++) {
-    const i = p * 4;
-    if (data[i + 3] > 16 && (hasTransparency || distance(data[i], data[i + 1], data[i + 2]) > tolerance)) { mask[p] = 1; foreground++; }
+    if (isForeground(p)) { mask[p] = 1; foreground++; }
   }
   if (!foreground) throw new Error('No product detected. Try lowering the background tolerance.');
   // Keep all meaningful components (including disconnected earrings and chains).
@@ -49,14 +47,11 @@ export function detectBounds({ data, width, height }, tolerance = 24) {
   if (!kept.length) throw new Error('No clear product detected. Try a larger image or lower tolerance.');
   let left = width, top = height, right = -1, bottom = -1;
   for (const c of kept) { left = Math.min(left, c.left); top = Math.min(top, c.top); right = Math.max(right, c.right); bottom = Math.max(bottom, c.bottom); }
-  let warning = '';
-  if (!hasTransparency && (consistency < .88 || foreground / total > .9)) {
-    left = 0; top = 0; right = width - 1; bottom = height - 1;
-    warning = 'Background is not uniform. Full image retained; use a plain-background product photo for accurate sizing.';
-  } else if (left === 0 || top === 0 || right === width - 1 || bottom === height - 1) {
-    warning = 'Product touches an image edge. Check that the original product is not already cropped.';
-  }
-  return { left, top, right: right + 1, bottom: bottom + 1, width: right - left + 1, height: bottom - top + 1, background, warning };
+  return {
+    left, top, right: right + 1, bottom: bottom + 1,
+    width: right - left + 1, height: bottom - top + 1,
+    background: null, warning: '', preserveOriginal: false,
+  };
 }
 
 export function fitBounds(bounds, width, height, coverage = .8) {
@@ -73,6 +68,15 @@ export async function normalizeImage(bitmap, { coverage = 80, size = 1200, aspec
   const ctx = sample.getContext('2d', { willReadFrequently: true });
   ctx.drawImage(bitmap, 0, 0, sample.width, sample.height);
   const detected = detectBounds(ctx.getImageData(0, 0, sample.width, sample.height), tolerance);
+  if (detected.preserveOriginal) {
+    // The caller reuses the original file URL: no resampling or added padding.
+    return {
+      preserveOriginal: true, blob: null,
+      bounds: { left: 0, top: 0, right: bitmap.width, bottom: bitmap.height, width: bitmap.width, height: bitmap.height },
+      placement: { x: 0, y: 0, width: bitmap.width, height: bitmap.height, scale: 1 },
+      width: bitmap.width, height: bitmap.height, warning: '', upscale: false,
+    };
+  }
   const bounds = {
     left: Math.floor(detected.left / sample.width * bitmap.width), top: Math.floor(detected.top / sample.height * bitmap.height),
     right: Math.min(bitmap.width, Math.ceil(detected.right / sample.width * bitmap.width)),
@@ -83,10 +87,9 @@ export async function normalizeImage(bitmap, { coverage = 80, size = 1200, aspec
   canvas.width = Math.round(aspect >= 1 ? size : size * aspect);
   canvas.height = Math.round(aspect >= 1 ? size / aspect : size);
   const out = canvas.getContext('2d');
-  if (detected.background) { out.fillStyle = `rgb(${detected.background.join(',')})`; out.fillRect(0, 0, canvas.width, canvas.height); }
   const placement = fitBounds(bounds, canvas.width, canvas.height, coverage / 100);
   out.imageSmoothingEnabled = true; out.imageSmoothingQuality = 'high';
   out.drawImage(bitmap, bounds.left, bounds.top, bounds.width, bounds.height, placement.x, placement.y, placement.width, placement.height);
   const blob = await new Promise((resolve, reject) => canvas.toBlob(blob => blob ? resolve(blob) : reject(new Error('Unable to export image.')), 'image/png'));
-  return { blob, bounds, placement, width: canvas.width, height: canvas.height, warning: detected.warning, upscale: placement.scale > 1.1 };
+  return { preserveOriginal: false, blob, bounds, placement, width: canvas.width, height: canvas.height, warning: detected.warning, upscale: placement.scale > 1.1 };
 }

@@ -39,7 +39,7 @@ function render() {
     normalized.setAttribute('aria-busy', item.state === 'pending' || item.state === 'processing');
     if (item.state === 'ready') {
       const after = element('img');
-      after.src = item.outputURL;
+      after.src = item.result.preserveOriginal ? item.originalURL : item.outputURL;
       after.alt = `Resized ${item.file.name}`;
       normalized.append(after);
       if (item.result.warning) normalized.append(issue(item.result.warning));
@@ -71,7 +71,7 @@ async function processQueue() {
         if (version !== currentVersion) { item.state = 'pending'; continue; }
         if (item.outputURL) URL.revokeObjectURL(item.outputURL);
         item.result = result;
-        item.outputURL = URL.createObjectURL(result.blob);
+        item.outputURL = result.preserveOriginal ? null : URL.createObjectURL(result.blob);
         item.state = 'ready';
         item.error = '';
       } catch (error) {
