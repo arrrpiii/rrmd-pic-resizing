@@ -1,0 +1,15 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1000" height="1000" viewBox="0 0 1000 1000">
+  <defs>
+    <linearGradient id="gold"><stop stop-color="#a97824"/><stop offset=".23" stop-color="#f2d78b"/><stop offset=".5" stop-color="#bc8c30"/><stop offset=".8" stop-color="#f8e6a6"/><stop offset="1" stop-color="#98651e"/></linearGradient>
+    <linearGradient id="stone" x2="1" y2="1"><stop stop-color="#fff"/><stop offset=".35" stop-color="#c1cfda"/><stop offset=".65" stop-color="#f9fcff"/><stop offset="1" stop-color="#99aebd"/></linearGradient>
+    <clipPath id="oval"><ellipse cy="-73" rx="115" ry="153"/></clipPath>
+  </defs>
+  <g transform="translate(565 540) rotate(-25) scale(.66)">
+    <ellipse cy="85" rx="153" ry="217" fill="none" stroke="url(#gold)" stroke-width="48"/>
+    <ellipse cy="-73" rx="167" ry="200" fill="url(#gold)"/>
+    <ellipse cy="-73" rx="142" ry="175" fill="#d7e0e7" stroke="#fffdf4" stroke-width="14" stroke-dasharray="11 10"/>
+    <ellipse cy="-73" rx="115" ry="153" fill="url(#stone)" stroke="#ba913e" stroke-width="10"/>
+    <g clip-path="url(#oval)" stroke="#fff" stroke-width="8" fill="none"><path d="M0-226 77-175 115-73 77 28 0 80-77 28-115-73-77-175Z"/><path d="M0-226 51-123 77 28-51-22-77-175 51-123-51-22 0 80M115-73 51-123-77 28M-115-73-51-22 77-175"/></g>
+    <g fill="url(#gold)"><circle cx="-95" cy="-161" r="13"/><circle cx="95" cy="-161" r="13"/><circle cx="-95" cy="15" r="13"/><circle cx="95" cy="15" r="13"/></g>
+  </g>
+</svg>

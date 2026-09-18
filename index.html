@@ -1,0 +1,49 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="theme-color" content="#f7f8f5"><meta name="description" content="Center and consistently size product images, privately in your browser.">
+  <title>Product Fit — Image sizing studio</title>
+  <link rel="stylesheet" href="styles.css"><script type="module" src="app.js"></script>
+</head>
+<body>
+  <header class="topbar"><a class="brand" href="/" aria-label="Product Fit home"><span class="brand-mark">⌗</span> product<span class="brand-light">fit</span><span class="studio-tag">STUDIO</span></a><span class="private"><span class="status-dot"></span> Private by design. All processing stays in your browser.</span></header>
+  <main>
+    <section class="hero">
+      <div><p class="eyebrow">A LITTLE CONSISTENCY. A BIG DIFFERENCE.</p><h1>A better fit.<br>For every product<span class="green">.</span></h1><p class="intro">Different images. Same visual balance.<br>Automatically size and center your products for a beautifully consistent storefront.</p></div>
+      <div class="hero-visual" aria-label="Example of inconsistent images becoming consistently sized">
+        <div class="mini-group before"><div class="mini-card"><img src="assets/demo-emerald.svg" alt="Large ring before sizing"></div><div class="mini-card"><img src="assets/demo-oval.svg" alt="Small ring before sizing"></div><span>BEFORE</span></div>
+        <span class="hero-arrow" aria-hidden="true">↗</span>
+        <div class="mini-group after"><div class="mini-card"><img id="hero-one" src="assets/demo-emerald.svg" alt="Centered ring after sizing"></div><div class="mini-card"><img id="hero-two" src="assets/demo-oval.svg" alt="Centered ring after sizing"></div><span><span class="tiny-dot"></span> THE PERFECT FIT</span></div>
+      </div>
+    </section>
+    <div class="workspace">
+      <section class="images-panel">
+        <div class="section-heading"><div><span class="step">01</span><h2>Your images</h2><span class="count" id="count">0</span></div><button id="clear" class="text-button" hidden>Clear all</button></div>
+        <label class="dropzone" id="dropzone" for="file-input" tabindex="0" role="button" aria-label="Upload product images">
+          <span class="upload-icon" aria-hidden="true"><svg viewBox="0 0 32 32" fill="none"><path d="M16 21V5m-6 6 6-6 6 6M6 21v5a2 2 0 0 0 2 2h16a2 2 0 0 0 2-2v-5" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/></svg></span>
+          <strong>Drop your product images here</strong><span class="drop-description">A single favorite or your entire collection.</span><span class="button primary browse">Browse files <span>↗</span></span><span class="file-hint">PNG, JPG or WebP · Up to 25 MB each</span>
+        </label>
+        <input id="file-input" type="file" accept="image/png,image/jpeg,image/webp" multiple hidden>
+        <div class="sample-bar"><span>Just looking around?</span><button id="demo" class="text-button">Try with sample rings <span>→</span></button></div>
+        <div id="messages" role="status" aria-live="polite"></div>
+        <div class="results-toolbar" id="results-toolbar" hidden><span id="results-label">Your collection</span><div class="segmented" aria-label="Preview mode"><button id="view-after" class="active" aria-pressed="true">Normalized</button><button id="view-before" aria-pressed="false">Original</button></div></div>
+        <div id="results" class="results"></div>
+        <div class="how-it-works" id="how-it-works"><div><span class="how-icon">⌖</span><strong>Find the edges</strong><p>Detect the visible product,<br>not the empty space.</p></div><div><span class="how-icon">⤢</span><strong>Find the balance</strong><p>Resize proportionally.<br>No stretching. No cropping.</p></div><div><span class="how-icon">⊞</span><strong>Ready for your store</strong><p>Consistent canvases.<br>A cohesive collection.</p></div></div>
+      </section>
+      <aside class="settings-panel">
+        <div class="section-heading"><div><span class="step">02</span><h2>Make it fit</h2></div><span class="auto-tag">AUTO</span></div>
+        <div class="setting coverage-setting"><div class="label-row"><label for="coverage">Product coverage</label><output for="coverage" id="coverage-value">80<span>%</span></output></div><input type="range" id="coverage" min="50" max="95" value="80"><div class="range-labels"><span>More breathing room</span><span>Closer crop</span></div></div>
+        <div class="fit-diagram" aria-hidden="true"><div class="fit-card"><span class="measure top">80%</span><div class="fit-area"><span>⌖</span></div><span class="center-label">ALWAYS CENTERED</span></div></div>
+        <p class="setting-note">The product fits inside 80% of the canvas width and height, with its proportions preserved.</p>
+        <div class="setting"><label for="aspect">Card shape</label><select id="aspect"><option value="1">Square · 1:1</option><option value="0.8">Portrait · 4:5</option><option value="1.25">Landscape · 5:4</option></select></div>
+        <div class="setting"><label for="size">Export size <span class="optional">longest side</span></label><select id="size"><option value="1200">1,200 px</option><option value="1600">1,600 px</option><option value="2000">2,000 px</option></select></div>
+        <details><summary>Detection settings <span>+</span></summary><label class="sensitivity-label" for="tolerance">Background tolerance <output id="tolerance-value">24</output></label><input type="range" id="tolerance" min="5" max="70" value="24"><p>Lower values retain faint edges and shadows. Higher values ignore more background. Best with a plain or transparent background.</p></details>
+        <label class="toggle-row" for="guides"><span>Show product bounds</span><input type="checkbox" id="guides"><span class="toggle" aria-hidden="true"></span></label>
+        <div class="export-block"><button class="button primary download-all" id="download-all" disabled><span>↓</span> Download all <span class="zip-tag">ZIP</span></button><p>PNG exports · Original background preserved</p></div>
+      </aside>
+    </div>
+    <footer><span><span class="tiny-dot"></span> Made for products that deserve a better frame.</span><span>No uploads. No account. Just a better fit.</span></footer>
+  </main>
+</body>
+</html>

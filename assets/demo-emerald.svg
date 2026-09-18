@@ -1,0 +1,15 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1000" height="1000" viewBox="0 0 1000 1000">
+  <defs>
+    <linearGradient id="gold"><stop stop-color="#a97824"/><stop offset=".23" stop-color="#f2d78b"/><stop offset=".5" stop-color="#bc8c30"/><stop offset=".8" stop-color="#f8e6a6"/><stop offset="1" stop-color="#98651e"/></linearGradient>
+    <linearGradient id="stone" x2="1" y2="1"><stop stop-color="#f9fcff"/><stop offset=".4" stop-color="#becdd8"/><stop offset=".6" stop-color="#fff"/><stop offset="1" stop-color="#98aeba"/></linearGradient>
+  </defs>
+  <g transform="translate(455 470) rotate(-25)">
+    <ellipse cy="85" rx="153" ry="217" fill="none" stroke="url(#gold)" stroke-width="48"/>
+    <rect x="-167" y="-240" width="334" height="352" rx="62" fill="url(#gold)"/>
+    <rect x="-144" y="-217" width="288" height="306" rx="49" fill="#dce5ea" stroke="#fbf9ec" stroke-width="13" stroke-dasharray="10 9"/>
+    <path d="M-92-196H92L123-163V34L92 67H-92L-123 34V-163Z" fill="url(#stone)" stroke="#bd984a" stroke-width="10"/>
+    <path d="M-92-196-69-158H69L92-196M123-163 69-158 78 27 123 34M92 67 78 27H-78L-92 67M-123 34-78 27-69-158-123-163" fill="none" stroke="#fff" stroke-width="9"/>
+    <path d="M-69-158 69 27M69-158-78 27" stroke="#9dadbb" stroke-width="3" opacity=".65"/>
+    <g fill="url(#gold)"><circle cx="-110" cy="-185" r="14"/><circle cx="110" cy="-185" r="14"/><circle cx="-109" cy="55" r="14"/><circle cx="109" cy="55" r="14"/></g>
+  </g>
+</svg>
