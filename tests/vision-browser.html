@@ -1,0 +1,29 @@
+<!doctype html><html lang="en"><meta charset="utf-8"><title>MediaPipe smoke test</title><body><button id="run">Test face and hand models</button><pre id="result">Not started</pre><script type="module">
+const out = document.querySelector('#result');
+document.querySelector('#run').onclick = async () => {
+  document.querySelector('#run').disabled = true; out.textContent = '';
+  for (const kind of ['earrings','ring']) {
+    const worker = new Worker('../vision-worker.js');
+    out.textContent += `Loading ${kind}…\n`;
+    try {
+      await new Promise((resolve,reject) => {
+        const timer = setTimeout(() => reject(Error('Timed out')), 50000);
+        worker.onerror = e => { clearTimeout(timer); reject(Error(e.message)); };
+        worker.onmessage = async ({data}) => {
+          if (data.type === 'error') { clearTimeout(timer); reject(Error(data.message)); }
+          if (data.type === 'ready') {
+            const canvas = document.createElement('canvas'); canvas.width = 640; canvas.height = 480;
+            const ctx = canvas.getContext('2d'); ctx.fillStyle = '#aaa'; ctx.fillRect(0,0,640,480);
+            const bitmap = await createImageBitmap(canvas);
+            worker.postMessage({type:'frame',bitmap,timestamp:performance.now()},[bitmap]);
+          }
+          if (data.type === 'result') { clearTimeout(timer); out.textContent += `${kind}: loaded; inference succeeded; ${data.points.length} detections on blank image\n`; resolve(); }
+        };
+        worker.postMessage({type:'init',kind});
+      });
+    } catch(e) { out.textContent += `FAILED: ${e.message}\n`; }
+    finally { worker.terminate(); }
+  }
+  out.textContent += 'Done'; document.querySelector('#run').disabled = false;
+};
+</script></body></html>

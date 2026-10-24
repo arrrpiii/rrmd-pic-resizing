@@ -7,3 +7,5 @@ dist/
 *.log
 assets/rosace-poise.png
 assets/rosace-signature.png
+
+vendor/

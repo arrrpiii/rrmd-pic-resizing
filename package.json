@@ -5,7 +5,12 @@
   "scripts": {
     "dev": "node server.mjs",
     "start": "node server.mjs",
-    "build": "npm test && node build.mjs",
-    "test": "node --test tests/*.test.mjs"
+    "build": "npm test && node prepare.mjs && node build.mjs",
+    "test": "node --test tests/*.test.mjs",
+    "predev": "node prepare.mjs",
+    "prestart": "node prepare.mjs"
+  },
+  "dependencies": {
+    "@mediapipe/tasks-vision": "1.1.1"
   }
 }

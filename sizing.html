@@ -1,0 +1,36 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="theme-color" content="#f7f8f5">
+  <title>Product Fit</title>
+  <link rel="stylesheet" href="styles.css">
+  <script type="module" src="app.js"></script>
+</head>
+<body>
+  <main>
+    <form class="controls" aria-label="Image settings" onsubmit="return false">
+      <button type="button" id="upload" class="upload-button">
+        <svg aria-hidden="true" viewBox="0 0 24 24" fill="none"><path d="M12 16V3m-5 5 5-5 5 5M4 16v4a1 1 0 0 0 1 1h14a1 1 0 0 0 1-1v-4" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg>
+        Upload
+      </button>
+      <input id="file-input" type="file" accept="image/png,image/jpeg,image/webp" multiple hidden>
+      <div class="setting">
+        <div class="label-row"><label for="coverage">Product coverage</label><output for="coverage" id="coverage-value">80%</output></div>
+        <input type="range" id="coverage" min="50" max="95" value="80" aria-valuetext="80%">
+      </div>
+      <div class="setting">
+        <div class="label-row"><label for="tolerance">Background tolerance</label><output for="tolerance" id="tolerance-value">24</output></div>
+        <input type="range" id="tolerance" min="5" max="70" value="24">
+      </div>
+      <div class="setting shape-setting">
+        <label for="aspect">Card shape</label>
+        <select id="aspect"><option value="1">Square · 1:1</option><option value="0.8">Portrait · 4:5</option><option value="1.25">Landscape · 5:4</option></select>
+      </div>
+    </form>
+    <div id="messages" role="status" aria-live="polite"></div>
+    <section id="results" class="results" aria-label="Image comparisons: originals on the left, resized images on the right"></section>
+  </main>
+</body>
+</html>

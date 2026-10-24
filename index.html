@@ -1,36 +1,51 @@
 <!doctype html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1">
-  <meta name="theme-color" content="#f7f8f5">
-  <title>Product Fit</title>
-  <link rel="stylesheet" href="styles.css">
-  <script type="module" src="app.js"></script>
+  <meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="theme-color" content="#f7f8f5"><title>Jewellery try-on</title>
+  <link rel="stylesheet" href="tryon.css"><script type="module" src="tryon.js"></script>
 </head>
 <body>
   <main>
-    <form class="controls" aria-label="Image settings" onsubmit="return false">
-      <button type="button" id="upload" class="upload-button">
-        <svg aria-hidden="true" viewBox="0 0 24 24" fill="none"><path d="M12 16V3m-5 5 5-5 5 5M4 16v4a1 1 0 0 0 1 1h14a1 1 0 0 0 1-1v-4" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg>
-        Upload
-      </button>
-      <input id="file-input" type="file" accept="image/png,image/jpeg,image/webp" multiple hidden>
-      <div class="setting">
-        <div class="label-row"><label for="coverage">Product coverage</label><output for="coverage" id="coverage-value">80%</output></div>
-        <input type="range" id="coverage" min="50" max="95" value="80" aria-valuetext="80%">
-      </div>
-      <div class="setting">
-        <div class="label-row"><label for="tolerance">Background tolerance</label><output for="tolerance" id="tolerance-value">24</output></div>
-        <input type="range" id="tolerance" min="5" max="70" value="24">
-      </div>
-      <div class="setting shape-setting">
-        <label for="aspect">Card shape</label>
-        <select id="aspect"><option value="1">Square · 1:1</option><option value="0.8">Portrait · 4:5</option><option value="1.25">Landscape · 5:4</option></select>
-      </div>
-    </form>
-    <div id="messages" role="status" aria-live="polite"></div>
-    <section id="results" class="results" aria-label="Image comparisons: originals on the left, resized images on the right"></section>
+    <header><a class="brand" href="/">Product Fit <span>TRY-ON</span></a><a href="sizing.html">Image sizing ↗</a></header>
+    <section class="toolbar" aria-label="Capture settings">
+      <div><label for="jewellery-type">Jewellery</label><select id="jewellery-type"><option value="earrings">Earrings · face</option><option value="ring">Ring · open hand</option></select></div>
+      <fieldset><legend>Capture mode</legend><label><input type="radio" name="capture-mode" value="manual" checked> Manual</label><label><input type="radio" name="capture-mode" value="auto"> Auto · 3 seconds</label></fieldset>
+      <button id="upload-product" class="secondary">Add jewellery image</button>
+      <input id="product-file" type="file" accept="image/png,image/webp" hidden>
+      <img id="product-preview" alt="Selected jewellery" hidden>
+    </section>
+    <div class="layout">
+      <section class="camera-panel">
+        <div id="stage" class="stage">
+          <video id="camera" muted playsinline hidden aria-label="Live camera preview"></video>
+          <canvas id="photo" hidden aria-label="Captured photo with jewellery overlay"></canvas>
+          <div id="guide" class="guide face" hidden aria-hidden="true"></div>
+          <div id="empty"><span class="camera-icon" aria-hidden="true">◎</span><h1>Try it on.</h1><p>A quick photo. Your jewellery.</p></div>
+          <div id="countdown" hidden aria-live="assertive" aria-atomic="true"></div>
+        </div>
+        <div class="capture-bar"><button id="start">Start camera</button><button id="capture" disabled>Take photo</button><button id="stop" class="secondary" hidden>Stop camera</button><button id="retake" class="secondary" hidden>Retake</button></div>
+      </section>
+      <aside>
+        <span class="eyebrow">GET READY</span>
+        <h2 id="pose-title">Face the camera</h2>
+        <p id="pose-help">Keep your face upright and fully in view. Move hair away from both ears.</p>
+        <div id="status" class="status" role="status" aria-live="polite">Start the camera to check your pose.</div>
+        <p id="mode-help" class="small">When your pose is ready, press Take photo.</p>
+        <p class="small" id="limitation">Ear visibility needs your own check; the detector cannot reliably spot hair covering an earlobe.</p>
+        <p id="product-status" class="small" role="status">Add a transparent PNG or WebP of one earring or one ring.</p>
+        <section id="adjustments" hidden aria-label="Adjust jewellery placement">
+          <h2>Adjust the fit</h2>
+          <p class="small">Approximate 2D preview. Drag the jewellery into place.</p>
+          <label for="piece">Jewellery piece</label><select id="piece"></select>
+          <label for="scale">Size <output id="scale-value">100%</output></label><input id="scale" type="range" min="30" max="250" value="100">
+          <label for="rotation">Rotation <output id="rotation-value">0°</output></label><input id="rotation" type="range" min="-180" max="180" value="0">
+          <label for="position-x">Horizontal position</label><input id="position-x" type="range" min="0" max="100" value="50" step="0.1">
+          <label for="position-y">Vertical position</label><input id="position-y" type="range" min="0" max="100" value="50" step="0.1">
+        </section>
+        <p class="privacy">Your camera starts only when you choose. Photos and pose checks stay in your browser. Detection models download on first use.</p>
+      </aside>
+    </div>
   </main>
 </body>
 </html>
