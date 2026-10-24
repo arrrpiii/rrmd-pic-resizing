@@ -12,10 +12,14 @@ navigator.mediaDevices.getUserMedia = async () => {
   return stream;
 };
 const hand = [[.5,.85],[.33,.72],[.26,.65],[.2,.59],[.14,.53],[.36,.6],[.32,.43],[.29,.3],[.26,.17],[.46,.57],[.45,.39],[.44,.25],[.43,.11],[.56,.6],[.58,.44],[.6,.31],[.62,.18],[.65,.66],[.7,.53],[.75,.42],[.8,.31]].map(([x,y])=>({x,y,z:0}));
+let invalidPose = false;
+const togglePose = document.createElement('button'); togglePose.textContent = 'Test: hide subject';
+togglePose.onclick = () => { invalidPose = !invalidPose; togglePose.textContent = invalidPose ? 'Test: show subject' : 'Test: hide subject'; };
+document.querySelector('.toolbar').append(togglePose);
 window.Worker = class {
   postMessage(data) {
     if (data.type === 'init') { this.kind = data.kind; setTimeout(() => this.onmessage?.({data:{type:'ready'}}),30); }
-    else {data.bitmap.close();setTimeout(()=> this.onmessage?.({data:{type:'result',points:[this.kind === 'ring' ? hand : points],timestamp:data.timestamp}}),30);}
+    else {data.bitmap.close();setTimeout(()=> this.onmessage?.({data:{type:'result',points:invalidPose ? [] : [this.kind === 'ring' ? hand : points],timestamp:data.timestamp}}),30);}
   }
   terminate() {this.onmessage=null;}
 };

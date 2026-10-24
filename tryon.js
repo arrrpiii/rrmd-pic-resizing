@@ -1,21 +1,57 @@
 import { CaptureGate, validatePose, motionBetween, placementsFor } from './capture-logic.js';
+import { productBounds } from './product-image.js';
 const $ = id => document.getElementById(id);
 const video = $('camera'), photo = $('photo');
 const gate = new CaptureGate();
 let stream, worker, session = 0, active = false, loading = false, raf, watchdog;
 let ready = false, busy = false, previous = null, lastVideoTime = -1, sentAt = 0, lastResult = 0;
 let snapshot, quality, manualRequested = false, captured = null, capturePoints = null, pieces = [];
-let product = null, productURL = null, uploadVersion = 0;
+let product = null, productURL = null, uploadVersion = 0, livePoints = null;
 const kind = () => $('jewellery-type').value;
 const mode = () => document.querySelector('[name=capture-mode]:checked').value;
-function status(message, style = '') { $('status').textContent = message; $('status').className = `status ${style}`; }
-function resetGate() { gate.reset(); ready = false; previous = null; manualRequested = false; $('capture').disabled = true; $('countdown').hidden = true; }
+function status(message, style = '') {
+  $('status').textContent = message; $('status').className = `status ${style}`;
+  $('live-feedback').hidden = !(active || loading);
+  $('live-feedback').className = `live-feedback ${style}`;
+  $('pose-state').textContent = style === 'ready' ? 'Position acceptable' : loading ? 'Checking position' : 'Adjust your position';
+  $('pose-message').textContent = message;
+  $('guide').classList.toggle('acceptable', style === 'ready');
+}
+function productFeedback(message, error = false) {
+  $('upload-feedback').textContent = message;
+  $('upload-feedback').classList.toggle('error', error);
+  $('product-status').textContent = message;
+}
+function clearLive() {
+  livePoints = null;
+  const canvas = $('live-jewellery');
+  canvas.getContext('2d').clearRect(0, 0, canvas.width, canvas.height);
+  canvas.hidden = true;
+}
+function drawPieces(ctx, placements) {
+  for (const p of placements) {
+    const width = p.baseWidth * p.scale, height = width * product.height / product.width;
+    ctx.save(); ctx.translate(p.x, p.y); ctx.rotate(p.angle);
+    ctx.drawImage(product, -width / 2, kind() === 'earrings' ? 0 : -height / 2, width, height);
+    ctx.restore();
+  }
+}
+function drawLive() {
+  const canvas = $('live-jewellery');
+  canvas.width = video.videoWidth; canvas.height = video.videoHeight;
+  canvas.hidden = !active || !product || !livePoints;
+  if (canvas.hidden) return;
+  const mirrored = livePoints.map(p => ({ ...p, x: 1 - p.x }));
+  const placements = placementsFor(kind(), mirrored, canvas.width, canvas.height).map(p => ({ ...p, baseWidth: p.width, scale: 1 }));
+  drawPieces(canvas.getContext('2d'), placements);
+}
+function resetGate() { clearLive(); gate.reset(); ready = false; previous = null; manualRequested = false; $('capture').disabled = true; $('countdown').hidden = true; }
 function stopCamera(message) {
   session++; active = false; loading = false; busy = false;
   cancelAnimationFrame(raf); clearInterval(watchdog);
   worker?.terminate(); worker = null;
   stream?.getTracks().forEach(track => track.stop()); stream = null;
-  video.srcObject = null; video.hidden = true; $('guide').hidden = true;
+  video.srcObject = null; video.hidden = true; $('guide').hidden = true; $('live-feedback').hidden = true;
   $('stop').hidden = true; $('start').hidden = !!captured; $('start').disabled = false;
   resetGate();
   if (!captured) $('empty').hidden = false;
@@ -71,6 +107,7 @@ async function startCamera() {
         if (now - data.timestamp > 650) { resetGate(); status('Detection is slow. Hold still or try a faster device.'); return; }
         const validation = validatePose(kind(), data.points, quality, snapshot.width / snapshot.height);
         const points = data.points[0];
+        if (validation.valid) { livePoints = points; drawLive(); } else clearLive();
         const moving = validation.valid && motionBetween(previous, points, snapshot.width / snapshot.height) > .025;
         previous = validation.valid ? points : null;
         const valid = validation.valid && !moving;
@@ -140,11 +177,7 @@ function drawPhoto() {
   photo.width = captured.width; photo.height = captured.height;
   const ctx = photo.getContext('2d'); ctx.drawImage(captured, 0, 0);
   if (!product) return;
-  pieces.forEach(p => {
-    const width = p.baseWidth * p.scale, height = width * product.height / product.width;
-    ctx.save(); ctx.translate(p.x, p.y); ctx.rotate(p.angle);
-    ctx.drawImage(product, -width / 2, kind() === 'earrings' ? 0 : -height / 2, width, height); ctx.restore();
-  });
+  drawPieces(ctx, pieces);
 }
 function syncAdjustments() {
   const p = pieces[+$('piece').value]; if (!p) return;
@@ -170,32 +203,27 @@ $('upload-product').onclick = () => $('product-file').click();
 $('product-file').onchange = async e => {
   const file = e.target.files[0]; e.target.value = ''; if (!file) return;
   const upload = ++uploadVersion;
-  if (!['image/png', 'image/webp'].includes(file.type) || file.size > 15 * 1024 * 1024) { $('product-status').textContent = 'Choose a transparent PNG or WebP under 15 MB.'; return; }
+  if (!['image/png', 'image/jpeg', 'image/webp'].includes(file.type) || file.size > 15 * 1024 * 1024) { productFeedback('Choose a PNG, JPG or WebP under 15 MB.' + (product ? ' Your previous jewellery is still selected.' : ''), true); return; }
+  productFeedback('Loading jewellery…');
   let bitmap;
   try {
     bitmap = await createImageBitmap(file);
     if (bitmap.width * bitmap.height > 16000000) throw Error('Choose an image under 16 megapixels.');
     const temp = document.createElement('canvas'); temp.width = bitmap.width; temp.height = bitmap.height;
     const ctx = temp.getContext('2d', { willReadFrequently: true }); ctx.drawImage(bitmap, 0, 0);
-    const data = ctx.getImageData(0, 0, temp.width, temp.height).data;
-    let left = temp.width, top = temp.height, right = -1, bottom = -1, transparent = 0;
-    for (let y = 0; y < temp.height; y++) for (let x = 0; x < temp.width; x++) {
-      const alpha = data[(y * temp.width + x) * 4 + 3];
-      if (alpha < 16) transparent++;
-      if (alpha > 24) { left = Math.min(left, x); right = Math.max(right, x); top = Math.min(top, y); bottom = Math.max(bottom, y); }
-    }
-    if (transparent < temp.width * temp.height * .01 || right < left) throw Error('Use a cutout with a transparent background, showing one jewellery piece.');
-    const cutout = document.createElement('canvas'); cutout.width = right - left + 1; cutout.height = bottom - top + 1;
-    cutout.getContext('2d').drawImage(temp, left, top, cutout.width, cutout.height, 0, 0, cutout.width, cutout.height);
+    const bounds = productBounds(ctx.getImageData(0, 0, temp.width, temp.height));
+    const cutout = document.createElement('canvas'); cutout.width = bounds.width; cutout.height = bounds.height;
+    cutout.getContext('2d').drawImage(temp, bounds.left, bounds.top, bounds.width, bounds.height, 0, 0, bounds.width, bounds.height);
     const blob = await new Promise(resolve => cutout.toBlob(resolve, 'image/png'));
     if (!blob) throw Error('Could not read the jewellery image.');
     if (upload !== uploadVersion) return;
     product = cutout;
     if (productURL) URL.revokeObjectURL(productURL);
     productURL = URL.createObjectURL(blob); $('product-preview').src = productURL; $('product-preview').hidden = false;
-    $('product-status').textContent = 'Jewellery added. Use one earring cutout for the pair, or a front-view ring cutout.';
+    productFeedback(`${file.name} added. ${bounds.opaque ? 'Its background remains visible; use a transparent cutout for a cleaner fit.' : 'Ready for live try-on.'}`);
+    if (active && livePoints) drawLive();
     if (captured) { resetPlacements(); status('Adjust the jewellery to fit.', 'ready'); }
-  } catch (error) { if (upload === uploadVersion) $('product-status').textContent = error.message || 'Could not read this image.'; }
+  } catch (error) { if (upload === uploadVersion) productFeedback((error.message || 'Could not read this image.') + (product ? ' Your previous jewellery is still selected.' : ''), true); }
   finally { bitmap?.close(); }
 };
 $('piece').onchange = syncAdjustments;

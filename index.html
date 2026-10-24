@@ -12,13 +12,16 @@
       <div><label for="jewellery-type">Jewellery</label><select id="jewellery-type"><option value="earrings">Earrings · face</option><option value="ring">Ring · open hand</option></select></div>
       <fieldset><legend>Capture mode</legend><label><input type="radio" name="capture-mode" value="manual" checked> Manual</label><label><input type="radio" name="capture-mode" value="auto"> Auto · 3 seconds</label></fieldset>
       <button id="upload-product" class="secondary">Add jewellery image</button>
-      <input id="product-file" type="file" accept="image/png,image/webp" hidden>
+      <input id="product-file" type="file" accept="image/png,image/jpeg,image/webp" hidden>
       <img id="product-preview" alt="Selected jewellery" hidden>
+      <p id="upload-feedback" class="upload-feedback" role="status" aria-live="polite">PNG, JPG or WebP · transparent cutouts work best</p>
     </section>
     <div class="layout">
       <section class="camera-panel">
         <div id="stage" class="stage">
           <video id="camera" muted playsinline hidden aria-label="Live camera preview"></video>
+          <canvas id="live-jewellery" hidden aria-label="Live jewellery overlay"></canvas>
+          <div id="live-feedback" class="live-feedback" hidden><strong id="pose-state">Checking position</strong><span id="pose-message"></span></div>
           <canvas id="photo" hidden aria-label="Captured photo with jewellery overlay"></canvas>
           <div id="guide" class="guide face" hidden aria-hidden="true"></div>
           <div id="empty"><span class="camera-icon" aria-hidden="true">◎</span><h1>Try it on.</h1><p>A quick photo. Your jewellery.</p></div>
@@ -33,7 +36,7 @@
         <div id="status" class="status" role="status" aria-live="polite">Start the camera to check your pose.</div>
         <p id="mode-help" class="small">When your pose is ready, press Take photo.</p>
         <p class="small" id="limitation">Ear visibility needs your own check; the detector cannot reliably spot hair covering an earlobe.</p>
-        <p id="product-status" class="small" role="status">Add a transparent PNG or WebP of one earring or one ring.</p>
+        <p id="product-status" class="small" role="status">Add one earring or ring image. It appears on the live video when your pose is detected.</p>
         <section id="adjustments" hidden aria-label="Adjust jewellery placement">
           <h2>Adjust the fit</h2>
           <p class="small">Approximate 2D preview. Drag the jewellery into place.</p>
